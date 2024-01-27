@@ -1,0 +1,53 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "foo": {
+        "time_stamp": "1970-01-01T00:00:00.000000000+00:00",
+        "type": "UNTYPED",
+        "metrics": [
+          {
+            "labels": {
+              "instance": "test",
+              "job": "test"
+            },
+            "value": "1"
+          }
+        ]
+      },
+      "labels": {
+        "instance": "test",
+        "job": "test"
+      },
+      "last_push_successful": true,
+      "push_failure_time_seconds": {
+        "time_stamp": "1969-12-31T00:00:00.000000000+00:00",
+        "type": "GAUGE",
+        "help": "Last Unix time when changing this group in the Pushgateway failed.",
+        "metrics": [
+          {
+            "labels": {
+              "instance": "test",
+              "job": "test"
+            },
+            "value": "0"
+          }
+        ]
+      },
+      "push_time_seconds": {
+        "time_stamp": "1970-01-02T00:00:00.000000000+00:00",
+        "type": "GAUGE",
+        "help": "Last Unix time when changing this group in the Pushgateway succeeded.",
+        "metrics": [
+          {
+            "labels": {
+              "instance": "test",
+              "job": "test"
+            },
+            "value": "0"
+          }
+        ]
+      }
+    }
+  ]
+}
