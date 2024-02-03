@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"slices"
 	"time"
 
 	"upsetter/pushgateway"
@@ -34,12 +35,15 @@ func main() {
 			continue
 		}
 
+		receivedKeys := make([]string, 0, len(groups))
+
 		for _, group := range groups {
 			if !group.LabelNamesMatch("job", "instance") {
 				continue
 			}
 
 			key := group.Key()
+			receivedKeys = append(receivedKeys, key)
 			metrics := group.Metrics.Filter("up", "push_time_seconds", "push_failure_time_seconds")
 			timestamp := metrics.MinTimestamp()
 
@@ -61,6 +65,13 @@ func main() {
 				if err != nil {
 					log.Printf("Error upsetting %s: %v", key, err)
 				}
+			}
+		}
+
+		for key := range states {
+			if !slices.Contains(receivedKeys, key) {
+				delete(states, key)
+				log.Printf("Group removed: %v", key)
 			}
 		}
 	}
