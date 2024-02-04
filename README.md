@@ -8,10 +8,12 @@ adds an `up` metric to groups with a `job` / `instance` label set.
 ## Usage
 
 ```
-$ ./upsetter --help
+$ ./upsetter -help
 Usage of ./upsetter:
   -refresh string
         Refresh period (default "20s")
+  -ttl string
+        Group TTL (default "24h")
   -url string
         Pushgateway URL (default "http://localhost:9091")
 ```

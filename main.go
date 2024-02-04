@@ -11,18 +11,24 @@ import (
 )
 
 const defaultRefresh = "20s"
+const defaultTTL = "24h"
 const defaultURL = "http://localhost:9091"
 
 func main() {
 	log.SetFlags(0)
 
 	refreshFlag := flag.String("refresh", defaultRefresh, "Refresh period")
+	ttlFlag := flag.String("ttl", defaultTTL, "Group TTL")
 	urlFlag := flag.String("url", defaultURL, "Pushgateway URL")
 	flag.Parse()
 
 	refreshPeriod, err := time.ParseDuration(*refreshFlag)
 	if err != nil {
 		log.Fatalf("Error parsing refresh period: %v", err)
+	}
+	groupTTL, err := time.ParseDuration(*ttlFlag)
+	if err != nil {
+		log.Fatalf("Error parsing group TTL: %v", err)
 	}
 
 	client := pushgateway.NewPushgateway(*urlFlag)
@@ -36,6 +42,7 @@ func main() {
 		}
 
 		receivedKeys := make([]string, 0, len(groups))
+		expirationTime := time.Now().Add(-groupTTL)
 
 		for _, group := range groups {
 			if !group.LabelNamesMatch("job", "instance") {
@@ -51,6 +58,16 @@ func main() {
 			if !ok {
 				states[key] = tracking.NewGroupState(timestamp)
 				log.Printf("Group added: %v", key)
+				continue
+			}
+
+			if group.Metrics.MaxTimestamp().Before(expirationTime) {
+				delete(states, key)
+				log.Printf("Group expired: %v", key)
+				err := client.Delete(key)
+				if err != nil {
+					log.Printf("Error deleting %s: %v", key, err)
+				}
 				continue
 			}
 

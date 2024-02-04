@@ -42,7 +42,7 @@ func TestMetricsGroup(t *testing.T) {
 	}
 }
 
-func TestMetrics(t *testing.T) {
+func TestMetricsMinTimestamp(t *testing.T) {
 	if timestamp := group.Metrics.MinTimestamp(); timestamp != earlier {
 		t.Errorf("Expected timestamp: %v, got: %v", earlier, timestamp)
 	}
@@ -53,6 +53,60 @@ func TestMetrics(t *testing.T) {
 	metrics = group.Metrics.Filter("baz", "push_time_seconds", "push_failure_time_seconds")
 	if timestamp := metrics.MinTimestamp(); !timestamp.IsZero() {
 		t.Errorf("Expected zero timestamp, got: %v", timestamp)
+	}
+
+}
+
+func TestMetricsMaxTimestamp(t *testing.T) {
+	if timestamp := group.Metrics.MaxTimestamp(); timestamp != later {
+		t.Errorf("Expected timestamp: %v, got: %v", later, timestamp)
+	}
+	metrics := group.Metrics.Filter("push_time_seconds", "push_failure_time_seconds")
+	if timestamp := metrics.MaxTimestamp(); timestamp != now {
+		t.Errorf("Expected timestamp: %v, got: %v", now, timestamp)
+	}
+	metrics = group.Metrics.Filter("baz", "push_time_seconds", "push_failure_time_seconds")
+	if timestamp := metrics.MaxTimestamp(); !timestamp.IsZero() {
+		t.Errorf("Expected zero timestamp, got: %v", timestamp)
+	}
+}
+
+func TestPushgatewayDelete(t *testing.T) {
+	var method, body string
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/metrics/job/test" {
+			method = r.Method
+			bytes, err := io.ReadAll(r.Body)
+			if err != nil {
+				w.WriteHeader(400)
+			} else {
+				body = string(bytes)
+			}
+			w.WriteHeader(202)
+		} else {
+			t.Logf("Expected metrics path, got: %v", r.URL.Path)
+			w.WriteHeader(400)
+		}
+	}))
+	defer ts.Close()
+
+	client := NewPushgateway(ts.URL)
+
+	err := client.Delete("job/test")
+	if err != nil {
+		t.Fatalf("Expected nil error, got: %v", err)
+	}
+	if method != "DELETE" {
+		t.Fatalf("Expected DELETE method, got: %v", method)
+	}
+	if body != "" {
+		t.Fatalf("Expected empty body, got: %v", body)
+	}
+
+	err = client.Delete("foo/bar")
+	if err == nil {
+		t.Fatalf("Expected non-nil error.")
 	}
 }
 

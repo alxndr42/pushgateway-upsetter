@@ -43,6 +43,32 @@ func NewPushgateway(baseURL string) Pushgateway {
 	}
 }
 
+// Delete deletes the metrics for key using a [DELETE request].
+//
+// [DELETE request]: https://github.com/prometheus/pushgateway#delete-method
+func (p Pushgateway) Delete(key string) error {
+	if !strings.HasPrefix(key, "job/") {
+		return fmt.Errorf("Key without job/ prefix.")
+	}
+	url, err := p.baseURL.Parse("/metrics/" + key)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest("DELETE", url.String(), nil)
+	if err != nil {
+		return err
+	}
+	res, err := p.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 202 {
+		return fmt.Errorf("HTTP response: %v", res.Status)
+	}
+	return nil
+}
+
 // QueryMetrics calls the [Query API] and returns MetricsGroup objects.
 //
 // [Query API]: https://github.com/prometheus/pushgateway#query-api
@@ -148,6 +174,18 @@ func (m Metrics) Filter(names ...string) Metrics {
 		}
 	}
 	return result
+}
+
+// MaxTimestamp returns the highest metric timestamp, or a zero Time.
+func (m Metrics) MaxTimestamp() time.Time {
+	if len(m) == 0 {
+		return time.Time{}
+	}
+	timestamps := make([]time.Time, 0, len(m))
+	for _, metric := range m {
+		timestamps = append(timestamps, metric.Timestamp)
+	}
+	return slices.MaxFunc(timestamps, func(a, b time.Time) int { return a.Compare(b) })
 }
 
 // MinTimestamp returns the lowest metric timestamp, or a zero Time.
