@@ -6,8 +6,8 @@ import (
 	"slices"
 	"time"
 
-	"upsetter/pushgateway"
-	"upsetter/tracking"
+	"codeberg.org/alxndr42/pushgateway-upsetter/pushgateway"
+	"codeberg.org/alxndr42/pushgateway-upsetter/tracking"
 )
 
 const defaultRefresh = "20s"

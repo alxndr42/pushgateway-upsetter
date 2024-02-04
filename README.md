@@ -8,8 +8,8 @@ adds an `up` metric to groups with a `job` / `instance` label set.
 ## Usage
 
 ```
-$ ./upsetter -help
-Usage of ./upsetter:
+$ ./pushgateway-upsetter -help
+Usage of ./pushgateway-upsetter:
   -refresh string
         Refresh period (default "20s")
   -ttl string
